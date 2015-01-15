@@ -452,7 +452,7 @@ _.extend(Isopack.prototype, {
 
   tarballName: function () {
     var self = this;
-    return self.name + '-' + self.version;
+    return colonConverter.convert(self.name) + '-' + self.version;
   },
 
   _toolArchitectures: function () {
