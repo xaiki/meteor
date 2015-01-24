@@ -746,6 +746,54 @@ var compileUnibuild = function (options) {
     }
   });
 
+    function loadOrderSort (a, b) {
+	var pa = a.servePath;
+	var pb = b.servePath;
+	var isTemplate_a = !! pa.match (/template\./);
+	var isTemplate_b = !! pb.match (/template\./);
+	if (isTemplate_a !== isTemplate_b) {
+	    return (isTemplate_a ? -1 : 1);
+	}
+
+	// main.* loaded last
+	var ismain_a = (files.pathBasename(pa).indexOf('main.') === 0);
+	var ismain_b = (files.pathBasename(pb).indexOf('main.') === 0);
+	if (ismain_a !== ismain_b) {
+	    return (ismain_a ? 1 : -1);
+	}
+
+	// /compatibility/ loaded first
+	var iscompatibility_a = (pa.indexOf(files.pathSep + 'compatibility' + files.pathSep) !== -1 ||
+                       pa.indexOf('compatibility' + files.pathSep) === 0);
+	var iscompatibility_b = (pb.indexOf(files.pathSep + 'compatibility' + files.pathSep) !== -1 ||
+                       pb.indexOf('compatibility' + files.pathSep) === 0);
+	if (iscompatibility_a !== iscompatibility_b) {
+	    return (iscompatibility_a ? -1 : 1);
+	}
+
+	// /lib/ loaded first
+	var islib_a = (pa.indexOf(files.pathSep + 'lib' + files.pathSep) !== -1 ||
+                       pa.indexOf('lib' + files.pathSep) === 0);
+	var islib_b = (pb.indexOf(files.pathSep + 'lib' + files.pathSep) !== -1 ||
+                       pb.indexOf('lib' + files.pathSep) === 0);
+	if (islib_a !== islib_b) {
+	    return (islib_a ? -1 : 1);
+	}
+
+	// deeper paths loaded first.
+	var len_a = pa.split(files.pathSep).length;
+	var len_b = pb.split(files.pathSep).length;
+	if (len_a !== len_b) {
+	    return (len_a < len_b ? 1 : -1);
+	}
+
+	// otherwise alphabetical
+	return (pa < pb ? -1 : 1);
+    };
+
+
+    js.sort(loadOrderSort);
+
   // *** Run Phase 1 link
 
   // Load jsAnalyze from the js-analyze package... unless we are the

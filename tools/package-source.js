@@ -26,58 +26,6 @@ var genTestName = function (name) {
   return AUTO_TEST_PREFIX + name;
 };
 
-// Returns a sort comparator to order files into load order.
-// templateExtensions should be a list of extensions like 'html'
-// which should be loaded before other extensions.
-var loadOrderSort = function (templateExtensions) {
-  var templateExtnames = {};
-  _.each(templateExtensions, function (extension) {
-    templateExtnames['.' + extension] = true;
-  });
-
-  return function (a, b) {
-    // XXX MODERATELY SIZED HACK --
-    // push template files ahead of everything else. this is
-    // important because the user wants to be able to say
-    //   Template.foo.events = { ... }
-    // in a JS file and not have to worry about ordering it
-    // before the corresponding .html file.
-    //
-    // maybe all of the templates should go in one file?
-    var isTemplate_a = _.has(templateExtnames, files.pathExtname(a));
-    var isTemplate_b = _.has(templateExtnames, files.pathExtname(b));
-    if (isTemplate_a !== isTemplate_b) {
-      return (isTemplate_a ? -1 : 1);
-    }
-
-    // main.* loaded last
-    var ismain_a = (files.pathBasename(a).indexOf('main.') === 0);
-    var ismain_b = (files.pathBasename(b).indexOf('main.') === 0);
-    if (ismain_a !== ismain_b) {
-      return (ismain_a ? 1 : -1);
-    }
-
-    // /lib/ loaded first
-    var islib_a = (a.indexOf(files.pathSep + 'lib' + files.pathSep) !== -1 ||
-                   a.indexOf('lib' + files.pathSep) === 0);
-    var islib_b = (b.indexOf(files.pathSep + 'lib' + files.pathSep) !== -1 ||
-                   b.indexOf('lib' + files.pathSep) === 0);
-    if (islib_a !== islib_b) {
-      return (islib_a ? -1 : 1);
-    }
-
-    // deeper paths loaded first.
-    var len_a = a.split(files.pathSep).length;
-    var len_b = b.split(files.pathSep).length;
-    if (len_a !== len_b) {
-      return (len_a < len_b ? 1 : -1);
-    }
-
-    // otherwise alphabetical
-    return (a < b ? -1 : 1);
-  };
-};
-
 // We currently have a 1 to 1 mapping between 'where' and 'arch'.
 // 'client' -> 'web'
 // 'server' -> 'os'
@@ -1626,13 +1574,7 @@ _.extend(PackageSource.prototype, {
           }));
         }
 
-        // We've found all the source files. Sort them!
-        var templateExtensions = [];
-        _.each(extensions, function (isTemplate, ext) {
-          isTemplate && templateExtensions.push(ext);
-        });
-        sources.sort(loadOrderSort(templateExtensions));
-
+        // We now sort on outputfiles later on
         // Convert into relPath/fileOptions objects.
         sources = _.map(sources, function (relPath) {
           var sourceObj = {relPath: relPath};
